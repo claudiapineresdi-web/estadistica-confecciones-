@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EstadíApp - Biblioteca UNIPAZ</title>
+    <!-- Librería para Gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #1F3A5F;
+            --secondary: #2A9D8F;
+            --accent: #E9A23B;
+            --bg: #F4F7F6;
+            --text: #333;
+        }
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
+            padding: 0; 
+        }
+        header { 
+            background-color: var(--primary); 
+            color: white; 
+            padding: 1.5rem 1rem; 
+            text-align: center; 
+        }
+        header h1 { margin: 0; font-size: 1.5rem; }
+        header p { margin: 0.5rem 0 0 0; font-size: 0.9rem; color: #cbd5e1; }
+        nav { 
+            background-color: var(--secondary); 
+            display: flex; 
+            justify-content: space-around; 
+            padding: 0; 
+            flex-wrap: wrap;
+        }
+        nav button { 
+            background: none; 
+            border: none; 
+            color: white; 
+            font-size: 1rem; 
+            cursor: pointer; 
+            padding: 1rem; 
+            flex-grow: 1;
+        }
+        nav button:hover { background-color: rgba(0,0,0,0.1); }
+        nav button.active { 
+            border-bottom: 4px solid var(--accent); 
+            font-weight: bold; 
+        }
+        .tab-content { 
+            display: none; 
+            padding: 1rem; 
+            max-width: 1000px; 
+            margin: auto; 
+        }
+        .tab-content.active { display: block; }
+        .card { 
+            background: white; 
+            padding: 1.5rem; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+            margin-bottom: 1.5rem; 
+        }
+        .badge {
+            background-color: var(--accent);
+            color: white;
+            padding: 0.3rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .form-group { display: flex; flex-direction: column; margin-bottom: 1rem; }
+        .form-group.full-width { grid-column: span 2; }
+        label { font-weight: bold; margin-bottom: 0.3rem; font-size: 0.9rem;}
+        input, select, textarea { 
+            padding: 0.6rem; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            font-size: 1rem; 
+            font-family: inherit;
+        }
+        .button-group { margin-top: 1rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+        button.btn { 
+            background-color: var(--secondary); 
+            color: white; border: none; padding: 0.8rem 1.2rem; cursor: pointer; 
+            border-radius: 4px; font-size: 1rem; font-weight: bold;
+        }
+        button.btn:hover { background-color: #218276; }
+        button.btn-outline { 
+            background-color: transparent; border: 1px solid var(--primary); 
+            color: var(--primary); padding: 0.6rem 1rem; border-radius: 4px; cursor: pointer; font-weight: bold;
+        }
+        button.btn-outline:hover { background-color: var(--primary); color: white; }
+        button.btn-danger { 
+            background-color: #e74c3c; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer;
+        }
+        .table-container { overflow-x: auto; margin-top: 1rem; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th, td { border: 1px solid #e2e8f0; padding: 0.8rem; text-align: center; }
+        th { background-color: var(--primary); color: white; font-size: 0.9rem; }
+        tr:nth-child(even) { background-color: #f8fafc; }
+        
+        /* Grillas para Análisis */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-box { background: var(--bg); padding: 1rem; border-radius: 8px; text-align: center; border-left: 4px solid var(--secondary); }
+        .stat-box h3 { margin: 0 0 0.5rem 0; font-size: 1rem; color: var(--primary); }
+        .stat-box p { margin: 0; font-size: 1.5rem; font-weight: bold; }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .chart-container { background: var(--bg); padding: 1rem; border-radius: 8px; }
+        
+        @media (max-width: 768px) {
+            .form-grid, .charts-grid { grid-template-columns: 1fr; }
+            .form-group.full-width { grid-column: span 1; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>EstadíApp – Grupo 1</h1>
+        <p>Uso y capacidad de la biblioteca de UNIPAZ</p>
+    </header>
+    <nav>
+        <button class="active" onclick="cambiarPestana(event, 'registrar')">Registrar y Datos</button>
+        <button onclick="cambiarPestana(event, 'analisis'); generarAnalisis();">Análisis Estadístico</button>
+        <button onclick="cambiarPestana(event, 'probabilidad'); generarProbabilidad();">Probabilidad</button>
+        <button onclick="cambiarPestana(event, 'informe'); cargarInforme();">Informe Final</button>
+    </nav>
+
+    <main>
+        <!-- ETAPA 1 y 2: REGISTRO Y GESTIÓN DE DATOS -->
+        <div id="registrar" class="tab-content active">
+            <div class="card">
+                <h2>Nuevo registro <span id="contador-registros" class="badge">0 registros</span></h2>
+                <form id="formulario-datos">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="fecha">Fecha</label>
+                            <input type="date" id="fecha" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="hora">Hora</label>
+                            <input type="time" id="hora" required>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="programa">Programa</label>
+                            <select id="programa" required>
+                                <option value="">-- Selecciona --</option>
+                                <option value="Ingeniería">Ingeniería</option>
+                                <option value="Ciencias">Ciencias</option>
+                                <option value="Administración">Administración</option>
+                                <option value="Salud">Salud</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="motivo">Motivo de la visita</label>
+                            <select id="motivo" required>
+                                <option value="">-- Selecciona --</option>
+                                <option value="Estudio individual">Estudio individual</option>
+                                <option value="Trabajo en grupo">Trabajo en grupo</option>
+                                <option value="Préstamo de material">Préstamo de material</option>
+                                <option value="Uso de computadores">Uso de computadores</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="encontro">¿Encontró lo que buscaba?</label>
+                            <select id="encontro" required>
+                                <option value="">-- Selecciona --</option>
+                                <option value="Sí">Sí</option>
+                                <option value="No">No</option>
+                                <option value="Parcialmente">Parcialmente</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="tiempo">Tiempo de permanencia (min)</label>
+                            <input type="number" id="tiempo" step="1" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="personas">N.º de personas en el grupo</label>
+                            <input type="number" id="personas" step="1" min="1" required>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button type="submit" class="btn">Guardar registro</button>
+                        <button type="button" class="btn btn-outline" onclick="llenarFechaHora()">Limpiar</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Base de datos</h2>
+                <div class="button-group" style="margin-bottom: 1rem;">
+                    <button class="btn btn-outline" onclick="exportarCSV()">Exportar Excel (CSV)</button>
+                    <button class="btn btn-outline" onclick="document.getElementById('input-importar-csv').click()">Importar CSV</button>
+                    <button class="btn btn-outline" onclick="descargarJSON()">Descargar Backup (.json)</button>
+                    <button class="btn btn-outline" onclick="document.getElementById('input-restaurar-json').click()">Restaurar Backup</button>
+                    
+                    <input type="file" id="input-importar-csv" accept=".csv" style="display: none;" onchange="importarCSV(event)">
+                    <input type="file" id="input-restaurar-json" accept=".json" style="display: none;" onchange="restaurarJSON(event)">
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>N.º</th><th>Fecha</th><th>Hora</th><th>Programa</th><th>Motivo</th><th>¿Encontró?</th><th>Tiempo (min)</th><th>Personas</th><th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpo-tabla"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ETAPA 3: ANÁLISIS ESTADÍSTICO -->
+        <div id="analisis" class="tab-content">
+            <div class="card">
+                <h2>Estadística Descriptiva</h2>
+                <div class="stats-grid">
+                    <div class="stat-box"><h3>Total Registros</h3><p id="stat-total">0</p></div>
+                    <div class="stat-box"><h3>Promedio Tiempo (min)</h3><p id="stat-prom-tiempo">0</p></div>
+                    <div class="stat-box"><h3>Mediana Tiempo (min)</h3><p id="stat-med-tiempo">0</p></div>
+                    <div class="stat-box"><h3>Promedio Personas/Grupo</h3><p id="stat-prom-personas">0</p></div>
+                </div>
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <canvas id="graficoPrograma"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="graficoMotivo"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="graficoEncontro"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="graficoTiempo"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ETAPA 4: PROBABILIDAD -->
+        <div id="probabilidad" class="tab-content">
+            <div class="card">
+                <h2>Cálculos de Probabilidad Empírica</h2>
+                <p>Basado en los datos recolectados, ¿cuál es la probabilidad de que un usuario cumpla cierta condición?</p>
+                <div style="margin-top: 1rem;">
+                    <h3>1. Probabilidad Marginal (Por Programa)</h3>
+                    <div class="table-container">
+                        <table id="tabla-prob-programa">
+                            <thead><tr><th>Programa</th><th>Frecuencia Absoluta</th><th>Probabilidad (P)</th><th>Porcentaje (%)</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    
+                    <h3 style="margin-top: 2rem;">2. Probabilidad Conjunta (Programa vs Encontró lo que buscaba)</h3>
+                    <div class="table-container">
+                        <table id="tabla-prob-conjunta">
+                            <!-- Se llena con JS -->
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ETAPA 5: INFORME -->
+        <div id="informe" class="tab-content">
+            <div class="card">
+                <h2>Informe Ejecutivo y Conclusiones</h2>
+                <p>Redacten aquí las conclusiones sobre si la capacidad instalada de la biblioteca es suficiente, basándose en los datos, gráficos y probabilidades calculadas.</p>
+                <textarea id="texto-informe" rows="12" style="width: 100%; box-sizing: border-box;" placeholder="Escribe tu informe aquí..."></textarea>
+                <div class="button-group">
+                    <button class="btn" onclick="guardarInforme()">Guardar Informe</button>
+                    <button class="btn btn-outline" onclick="imprimirInforme()">Imprimir / Guardar PDF</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // === LÓGICA GENERAL Y PESTAÑAS ===
+        function cambiarPestana(evento, idPestana) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(idPestana).classList.add('active');
+            evento.currentTarget.classList.add('active');
+        }
+
+        let datosApp = JSON.parse(localStorage.getItem('estadiAppDatosBiblio')) || [];
+        let graficosInstancias = {}; // Para destruir gráficos previos al actualizar
+
+        // === ETAPA 1: REGISTRO ===
+        function llenarFechaHora() {
+            const ahora = new Date();
+            ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
+            const iso = ahora.toISOString();
+            document.getElementById('fecha').value = iso.substring(0, 10);
+            document.getElementById('hora').value = iso.substring(11, 16);
+            document.getElementById('programa').value = '';
+            document.getElementById('motivo').value = '';
+            document.getElementById('encontro').value = '';
+            document.getElementById('tiempo').value = '';
+            document.getElementById('personas').value = '';
+        }
+
+        function calcularFranja(horaStr) {
+            return `${horaStr.split(':')[0]}:00–${horaStr.split(':')[0]}:59`;
+        }
+
+        function actualizarTabla() {
+            const tbody = document.getElementById('cuerpo-tabla');
+            tbody.innerHTML = '';
+            const datosInvertidos = [...datosApp].reverse();
+            const total = datosApp.length;
+
+            datosInvertidos.forEach((registro, i) => {
+                const numReal = total - i;
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${numReal}</td>
+                        <td>${registro.fecha}</td>
+                        <td>${registro.hora}</td>
+                        <td>${registro.programa}</td>
+                        <td>${registro.motivo}</td>
+                        <td>${registro.encontro}</td>
+                        <td>${registro.tiempo}</td>
+                        <td>${registro.personas}</td>
+                        <td><button class="btn-danger" onclick="eliminarRegistro(${numReal - 1})">X</button></td>
+                    </tr>
+                `;
+            });
+            document.getElementById('contador-registros').textContent = `${total} registros`;
+        }
+
+        document.getElementById('formulario-datos').addEventListener('submit', function(e) {
+            e.preventDefault();
+            datosApp.push({
+                fecha: document.getElementById('fecha').value,
+                hora: document.getElementById('hora').value,
+                franja: calcularFranja(document.getElementById('hora').value),
+                programa: document.getElementById('programa').value,
+                motivo: document.getElementById('motivo').value,
+                encontro: document.getElementById('encontro').value,
+                tiempo: Number(document.getElementById('tiempo').value),
+                personas: Number(document.getElementById('personas').value)
+            });
+            localStorage.setItem('estadiAppDatosBiblio', JSON.stringify(datosApp));
+            actualizarTabla();
+            llenarFechaHora();
+        });
+
+        function eliminarRegistro(indice) {
+            if(confirm('¿Eliminar registro?')) {
+                datosApp.splice(indice, 1);
+                localStorage.setItem('estadiAppDatosBiblio', JSON.stringify(datosApp));
+                actualizarTabla();
+            }
+        }
+
+        // === ETAPA 2: EXPORTAR E IMPORTAR ===
+        function exportarCSV() {
+            if (datosApp.length === 0) return alert('No hay datos.');
+            let csv = '\uFEFFFecha;Hora;Franja;Programa;Motivo;¿Encontró?;Tiempo;Personas\n';
+            datosApp.forEach(r => csv += `${r.fecha};${r.hora};${r.franja};${r.programa};${r.motivo};${r.encontro};${r.tiempo};${r.personas}\n`);
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+            link.download = 'Datos_Biblioteca.csv';
+            link.click();
+        }
+
+        function importarCSV(evento) {
+            const file = evento.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const lines = e.target.result.split('\n').map(l => l.trim()).filter(l => l !== '');
+                for (let i = 1; i < lines.length; i++) {
+                    const d = lines[i].split(';');
+                    if (d.length >= 8) {
+                        datosApp.push({ fecha: d[0], hora: d[1], franja: d[2], programa: d[3], motivo: d[4], encontro: d[5], tiempo: Number(d[6]), personas: Number(d[7]) });
+                    }
+                }
+                localStorage.setItem('estadiAppDatosBiblio', JSON.stringify(datosApp));
+                actualizarTabla();
+                alert('Datos importados correctamente.');
+            };
+            reader.readAsText(file, 'UTF-8');
+            evento.target.value = '';
+        }
+
+        function descargarJSON() {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(new Blob([JSON.stringify(datosApp)], { type: 'application/json' }));
+            link.download = 'Backup_Biblioteca.json';
+            link.click();
+        }
+
+        function restaurarJSON(evento) {
+            const file = evento.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                datosApp = JSON.parse(e.target.result);
+                localStorage.setItem('estadiAppDatosBiblio', JSON.stringify(datosApp));
+                actualizarTabla();
+                alert('Backup restaurado.');
+            };
+            reader.readAsText(file);
+            evento.target.value = '';
+        }
+
+        // === ETAPA 3: ANÁLISIS ===
+        function calcularFrecuencias(propiedad) {
+            const freq = {};
+            datosApp.forEach(r => freq[r[propiedad]] = (freq[r[propiedad]] || 0) + 1);
+            return freq;
+        }
+
+        function crearGrafico(idCanvas, tipo, titulo, etiquetas, datos, colores) {
+            if (graficosInstancias[idCanvas]) graficosInstancias[idCanvas].destroy();
+            const ctx = document.getElementById(idCanvas).getContext('2d');
+            graficosInstancias[idCanvas] = new Chart(ctx, {
+                type: tipo,
+                data: { labels: etiquetas, datasets: [{ label: titulo, data: datos, backgroundColor: colores, borderWidth: 1 }] },
+                options: { responsive: true, plugins: { title: { display: true, text: titulo } } }
+            });
+        }
+
+        function generarAnalisis() {
+            if(datosApp.length === 0) return;
+            
+            // Estadísticas básicas
+            const total = datosApp.length;
+            const tiempos = datosApp.map(d => d.tiempo).sort((a, b) => a - b);
+            const sumTiempo = tiempos.reduce((a, b) => a + b, 0);
+            const promTiempo = sumTiempo / total;
+            const medianaTiempo = total % 2 !== 0 ? tiempos[Math.floor(total/2)] : (tiempos[(total/2)-1] + tiempos[total/2]) / 2;
+            const promPersonas = datosApp.reduce((a, b) => a + b.personas, 0) / total;
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-prom-tiempo').textContent = promTiempo.toFixed(1);
+            document.getElementById('stat-med-tiempo').textContent = medianaTiempo;
+            document.getElementById('stat-prom-personas').textContent = promPersonas.toFixed(1);
+
+            // Gráficos
+            const freqProg = calcularFrecuencias('programa');
+            crearGrafico('graficoPrograma', 'bar', 'Visitantes por Programa', Object.keys(freqProg), Object.values(freqProg), '#1F3A5F');
+
+            const freqMotivo = calcularFrecuencias('motivo');
+            crearGrafico('graficoMotivo', 'pie', 'Motivos de Visita', Object.keys(freqMotivo), Object.values(freqMotivo), ['#2A9D8F', '#E9A23B', '#1F3A5F', '#e74c3c']);
+
+            const freqEnc = calcularFrecuencias('encontro');
+            crearGrafico('graficoEncontro', 'doughnut', '¿Encontró lo que buscaba?', Object.keys(freqEnc), Object.values(freqEnc), ['#2ecc71', '#e74c3c', '#f1c40f']);
+            
+            // Histograma improvisado de tiempos
+            const freqTiempos = { '0-30m':0, '31-60m':0, '61-120m':0, '+120m':0 };
+            tiempos.forEach(t => {
+                if(t<=30) freqTiempos['0-30m']++;
+                else if(t<=60) freqTiempos['31-60m']++;
+                else if(t<=120) freqTiempos['61-120m']++;
+                else freqTiempos['+120m']++;
+            });
+            crearGrafico('graficoTiempo', 'bar', 'Distribución de Tiempos', Object.keys(freqTiempos), Object.values(freqTiempos), '#E9A23B');
+        }
+
+        // === ETAPA 4: PROBABILIDAD ===
+        function generarProbabilidad() {
+            const total = datosApp.length;
+            if(total === 0) return;
+
+            // 1. Marginal (Programa)
+            const fProg = calcularFrecuencias('programa');
+            const tbodyProg = document.querySelector('#tabla-prob-programa tbody');
+            tbodyProg.innerHTML = '';
+            for(const [prog, count] of Object.entries(fProg)) {
+                let prob = count / total;
+                tbodyProg.innerHTML += `<tr><td>${prog}</td><td>${count}</td><td>${prob.toFixed(3)}</td><td>${(prob*100).toFixed(1)}%</td></tr>`;
+            }
+
+            // 2. Conjunta (Programa vs Encontró)
+            const tableConj = document.getElementById('tabla-prob-conjunta');
+            const programas = [...new Set(datosApp.map(d=>d.programa))];
+            const respuestas = ['Sí', 'No', 'Parcialmente'];
+            
+            let html = `<thead><tr><th>Programa \\ ¿Encontró?</th>`;
+            respuestas.forEach(r => html += `<th>${r}</th>`);
+            html += `<th>Total</th></tr></thead><tbody>`;
+
+            programas.forEach(p => {
+                html += `<tr><td><strong>${p}</strong></td>`;
+                let totalFila = 0;
+                respuestas.forEach(r => {
+                    const count = datosApp.filter(d => d.programa === p && d.encontro === r).length;
+                    totalFila += count;
+                    html += `<td>${count} <br><small>(${(count/total*100).toFixed(1)}%)</small></td>`;
+                });
+                html += `<td><strong>${totalFila}</strong></td></tr>`;
+            });
+            html += `</tbody>`;
+            tableConj.innerHTML = html;
+        }
+
+        // === ETAPA 5: INFORME ===
+        function cargarInforme() {
+            document.getElementById('texto-informe').value = localStorage.getItem('estadiAppInformeBiblio') || '';
+        }
+        function guardarInforme() {
+            localStorage.setItem('estadiAppInformeBiblio', document.getElementById('texto-informe').value);
+            alert('Informe guardado.');
+        }
+        function imprimirInforme() {
+            window.print();
+        }
+
+        // Inicializar
+        window.onload = function() {
+            llenarFechaHora();
+            actualizarTabla();
+        };
+    </script>
+</body>
+</html>
